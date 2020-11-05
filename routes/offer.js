@@ -1,8 +1,7 @@
-// create serveur routes
 const express = require("express");
 const router = express.Router();
+const cloudinary = require("cloudinary").v2;
 
-// mongoDB models
 const User = require("../models/User");
 const Offer = require("../models/Offer");
 
