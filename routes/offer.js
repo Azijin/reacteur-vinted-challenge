@@ -136,10 +136,9 @@ router.get("/vinted/offers", async (req, res) => {
 
 // Update an offer
 // TO DO => handle the image update
-router.put("/vinted/offer/update", isAuthenticated, async (req, res) => {
+router.put("/vinted/offer/update/:id", isAuthenticated, async (req, res) => {
   try {
     const {
-      id,
       title,
       description,
       price,
@@ -149,7 +148,7 @@ router.put("/vinted/offer/update", isAuthenticated, async (req, res) => {
       color,
       city,
     } = req.fields;
-    const offerToUpdate = await Offer.findById(id).select(
+    const offerToUpdate = await Offer.findById(req.params.id).select(
       "product_name product_description product_price product_details"
     );
     if (offerToUpdate) {
@@ -162,21 +161,35 @@ router.put("/vinted/offer/update", isAuthenticated, async (req, res) => {
       if (price) {
         offerToUpdate.product_price = price;
       }
-      if (brand) {
-        offerToUpdate.product_details[0].MARQUE = brand;
+      const details = offerToUpdate.product_details;
+      for (let i = 0; i < details.length; i++) {
+        if (details[i].MARQUE) {
+          if (brand) {
+            details[i].MARQUE = brand;
+          }
+        }
+        if (details[i].TAILLE) {
+          if (size) {
+            details[i].TAILLE = size;
+          }
+        }
+        if (details[i].ETAT) {
+          if (condition) {
+            details[i].ETAT = condition;
+          }
+        }
+        if (details[i].COULEUR) {
+          if (color) {
+            details[i].COULEUR = color;
+          }
+        }
+        if (details[i].EMPLACEMENT) {
+          if (city) {
+            details[i].EMPLACEMENT = city;
+          }
+        }
       }
-      if (size) {
-        offerToUpdate.product_details[1].TAILLE = size;
-      }
-      if (condition) {
-        offerToUpdate.product_details[2].ETAT = condition;
-      }
-      if (color) {
-        offerToUpdate.product_details[3].COULEUR = color;
-      }
-      if (city) {
-        offerToUpdate.product_details[4].EMPLACEMENT = city;
-      }
+      await offerToUpdate.markModified("product_details"); //save update in an array
       await offerToUpdate.save();
       res
         .status(200)
@@ -192,15 +205,15 @@ router.put("/vinted/offer/update", isAuthenticated, async (req, res) => {
 });
 
 //delete an offer
-router.delete("/vinted/offer/delete", isAuthenticated, async (req, res) => {
+router.delete("/vinted/offer/delete/:id", isAuthenticated, async (req, res) => {
   try {
-    const offerToDelete = await Offer.findById(req.query.id);
+    const offerToDelete = await Offer.findById(req.params.id);
     if (offerToDelete) {
       await cloudinary.api.delete_resources([
         offerToDelete.product_image.public_id,
       ]);
       await cloudinary.api.delete_folder(
-        `/vinted/user/${req.user.account.username}/offers/${req.query.id}`,
+        `/vinted/user/${req.user.account.username}/offers/${req.params.id}`,
         (error, result) => {
           console.log(result);
         }
