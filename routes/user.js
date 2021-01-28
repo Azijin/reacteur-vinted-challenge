@@ -19,49 +19,44 @@ cloudinary.config({
 const User = require("../models/User");
 const Offer = require("../models/Offer");
 
-//Middleware
-const uploadPicture = require("../middlewares/uploadPicture");
-
-router.post("/vinted/user/signup", uploadPicture, async (req, res) => {
+//ROUTE SIGNUP
+router.post("/vinted/user/signup", async (req, res) => {
   try {
-    const { email, username, phone } = req.fields;
+    const { email, username, password } = req.fields;
     if (email) {
-      const searchUser = await User.findOne({ email: email });
-      if (searchUser) {
+      const searchUserByEmail = await User.findOne({ email: email });
+      const searchUserByUsername = await User.findOne({
+        "account.username": username,
+      });
+      if (searchUserByEmail) {
         res.status(409).json({
           error: { message: "A profil is already registered with this email" },
         });
+      } else if (searchUserByUsername) {
+        res.status(409).json({
+          error: {
+            message: `A profil is already registered with this username`,
+          },
+        });
       } else {
-        if (username) {
-          const password = req.fields.password;
+        if (username && password) {
           const salt = uid2(64);
           const hash = SHA256(password + salt).toString(encBase64);
           const token = uid2(64);
-          const avatar = req.files.picture.path;
           const newUser = new User({
             email: email,
             account: {
               username: username,
-              phone: phone,
-              avatar: {},
             },
             token: token,
             hash: hash,
             salt: salt,
           });
-
-          const upload = await cloudinary.uploader.upload(avatar, {
-            folder: `vinted/user/${username}/profile_picture`,
-            public_id: `avatar of ${username} profile`,
-          });
-          newUser.account.avatar = upload;
           await newUser.save();
           res.status(200).json({
             message: "Your account has been created",
             _id: newUser._id,
             token: newUser.token,
-            account: newUser.account,
-            avatar: newUser.avatar,
           });
         } else {
           res.status(400).json({ error: { message: "Missing username" } });
@@ -74,9 +69,17 @@ router.post("/vinted/user/signup", uploadPicture, async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+//ROUTE LOGIN
 router.post("/vinted/user/login", async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.fields.email });
+    const regex = /@/g;
+    const login = req.fields.login;
+    const loginToSearch = regex.test(login)
+      ? { email: login }
+      : {
+          "account.username": login,
+        };
+    const user = await User.findOne(loginToSearch);
     if (user) {
       const hash = SHA256(req.fields.password + user.salt).toString(encBase64);
       if (user.hash === hash) {
@@ -92,7 +95,9 @@ router.post("/vinted/user/login", async (req, res) => {
     } else {
       res
         .status(404)
-        .json({ error: { message: "No mail associated to an account" } });
+        .json({
+          error: { message: "No mail or username associated to an account" },
+        });
     }
   } catch (error) {
     res.status(400).json({ error: error.message });
