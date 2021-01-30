@@ -108,7 +108,7 @@ router.get("/vinted/offers", async (req, res) => {
     let sort = {};
     if (req.query.sort === "price-desc") {
       sort.product_price = -1;
-    } else if (req.query.sort === "price - asc") {
+    } else if (req.query.sort === "price-asc") {
       sort.product_price = 1;
     }
     let limit = 5;
@@ -149,7 +149,7 @@ router.put("/vinted/offer/update/:id", isAuthenticated, async (req, res) => {
       city,
     } = req.fields;
     const offerToUpdate = await Offer.findById(req.params.id).select(
-      "product_name product_description product_price product_details"
+      "product_name product_description product_price product_details product_image"
     );
     if (offerToUpdate) {
       if (title) {
@@ -190,6 +190,19 @@ router.put("/vinted/offer/update/:id", isAuthenticated, async (req, res) => {
         }
       }
       await offerToUpdate.markModified("product_details"); //save update in an array
+      /* FINISH THE UPDATE OF PICTURE*/
+      if (req.files.picture) {
+        const user = req.user;
+        const pictureToUpload = await cloudinary.uploader.upload(
+          req.files.picture.path,
+          {
+            folder: `/vinted/user/${user.account.username}/offers/${offerToUpdate._id}`,
+            public_id: `${offerToUpdate.product_name}`,
+          }
+        );
+        offerToUpdate.product_image = pictureToUpload;
+      }
+
       await offerToUpdate.save();
       res
         .status(200)
