@@ -3,8 +3,9 @@ const router = express.Router();
 const stripe = require("stripe")(process.env.STRIPE_API_SECRET);
 
 const Offer = require("../models/Offer");
+const isAuthenticated = require("../middlewares/isAuthenticated");
 
-router.post("/vinted/payment", async (req, res) => {
+router.post("/vinted/payment", isAuthenticated, async (req, res) => {
   try {
     const { amount, id } = req.fields;
     const offer = await Offer.findById(id).select(
