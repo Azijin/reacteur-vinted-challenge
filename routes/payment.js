@@ -27,6 +27,8 @@ router.post("/vinted/payment", isAuthenticated, async (req, res) => {
     } else {
       res.status(400).json({ message: "no offer found" });
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+  }
 });
 module.exports = router;
