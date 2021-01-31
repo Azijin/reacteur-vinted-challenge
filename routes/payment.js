@@ -7,7 +7,7 @@ const Offer = require("../models/Offer");
 app.post("/vinted/payment", async (req, res) => {
   try {
     const { amount, id } = req.fields;
-    const offer = await (await Offer.findById(id)).isSelected(
+    const offer = await Offer.findById(id).select(
       "product_name product_description"
     );
     if (offer) {
