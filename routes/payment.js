@@ -27,3 +27,4 @@ router.post("/vinted/payment", isAuthenticated, async (req, res) => {
     }
   } catch (error) {}
 });
+module.exports = router;
