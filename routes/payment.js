@@ -17,7 +17,7 @@ router.post("/vinted/payment", isAuthenticated, async (req, res) => {
       const { product_name, product_description } = offer;
       const stripeToken = req.fields.stripeToken;
       const response = await stripe.charges.create({
-        unit_amount_decimal: amount * 100,
+        amount: amount * 100,
         currency: "eur",
         description: `${product_name} : ${product_description}`,
         source: stripeToken,
