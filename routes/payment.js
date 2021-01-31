@@ -23,7 +23,7 @@ router.post("/vinted/payment", isAuthenticated, async (req, res) => {
         source: stripeToken,
       });
       console.log(response.status);
-      res.status(200).json(reponse);
+      res.status(200).json(response);
     } else {
       res.status(400).json({ message: "no offer found" });
     }
