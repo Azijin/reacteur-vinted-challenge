@@ -7,10 +7,12 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 
 router.post("/vinted/payment", isAuthenticated, async (req, res) => {
   try {
+    console.log(req.fields);
     const { amount, id } = req.fields;
     const offer = await Offer.findById(id).select(
       "product_name product_description"
     );
+    console.log(offer);
     if (offer) {
       const { product_name, product_description } = offer;
       const stripeToken = req.fields.stripeToken;
