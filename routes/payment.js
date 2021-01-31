@@ -4,7 +4,7 @@ const stripe = require("stripe")(process.env.STRIPE_API_SECRET);
 
 const Offer = require("../models/Offer");
 
-app.post("/vinted/pay", async (req, res) => {
+app.post("/vinted/payment", async (req, res) => {
   try {
     const { amount, id } = req.fields;
     const offer = await (await Offer.findById(id)).isSelected(
