@@ -4,6 +4,8 @@ const stripe = require("stripe")(process.env.STRIPE_API_SECRET);
 const cloudinary = require("cloudinary").v2;
 
 const Offer = require("../models/Offer");
+const User = require("../models/User");
+
 const isAuthenticated = require("../middlewares/isAuthenticated");
 
 router.post("/vinted/payment", isAuthenticated, async (req, res) => {
@@ -23,15 +25,20 @@ router.post("/vinted/payment", isAuthenticated, async (req, res) => {
       });
       console.log(response);
       if (response.status === "succeeded") {
-        await cloudinary.api.delete_resources([offer.product_image.public_id]);
-        await cloudinary.api.delete_folder(
-          `/vinted/user/${offer.owner.account.username}/offers/${id}`,
-          (error, result) => {
-            console.log(result);
-          }
-        );
-        await offer.delete();
-        res.status(200).json(response);
+        const owner = await User.findById(offer.owner);
+        if (owner) {
+          await cloudinary.api.delete_resources([
+            offer.product_image.public_id,
+          ]);
+          await cloudinary.api.delete_folder(
+            `/vinted/user/${owner.account.username}/offers/${id}`,
+            (error, result) => {
+              console.log(result);
+            }
+          );
+          await offer.delete();
+          res.status(200).json(response);
+        }
       } else {
         res.status(400).json({ message: response.status });
       }
